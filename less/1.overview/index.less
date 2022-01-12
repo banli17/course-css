@@ -1,0 +1,200 @@
+// 变量
+@width: 10px;
+@height: @width + 10px;
+
+#header {
+	width: @width;
+	height: @height;
+}
+
+// 混合
+.bordered {
+	border-top: dotted 1px black;
+	border-bottom: solid 2px black;
+}
+
+#menu {
+	color: blue;
+}
+
+#menu a {
+	color: #111;
+	.bordered();
+}
+
+.post a {
+	#menu;
+	.bordered;
+	// #menu a; error
+}
+
+// 嵌套, 模仿了 HTML 的结构
+#header {
+	color: black;
+
+	.navigation {
+		font-size: 12px;
+	}
+
+	.logo {
+		width: 300px;
+	}
+}
+
+// 经典的 clearfix hack
+.clearfix {
+	display: block;
+	zoom: 1;
+
+	&:after {
+		content: '\200B';
+		display: block;
+		font-size: 0;
+		height: 0;
+		clear: both;
+		visibility: hidden;
+	}
+}
+
+// 嵌套规则和冒泡
+// @media @supports 可以以选择器相同的方式嵌套, @ 规则位于顶部，并与同规则集中其它元素的相对顺序保持不变，这叫冒泡
+.component {
+	width: 300px;
+
+	@media (min-width: 768px) {
+		width: 600px;
+
+		@media (min-resolution: 192dpi) {
+			background-color: blue;
+		}
+	}
+
+	@media(min-width: 1280px) {
+		width: 800px;
+	}
+}
+
+// 运算 +-*/ 而且会比较单位尝试转换单位
+
+@conversion-1: 5cm + 10mm; // 6cm
+@conversion-2: 2 - 3cm - 5mm; // -1.5cm
+@conversion-3: 2 + 5px - 3cm; // -106.38582677px 无意义转换
+
+@base: 5%;
+@fill: @base * 2; // 10%
+@other: @base + @fill; // 15%
+
+// 除号不会转换？
+//  LESS 版本升级，EasyLess插件 新版本跟随，不支持直接除法运算符引起的
+// 使用 ./ 或者加小括号 
+@color: #ff5500 / 2; 
+@color2: (#ff5500 / 2);
+.conversion-test{
+	width: @conversion-1;
+	height: @conversion-2;
+	border-width: @conversion-3;
+	size: 2cm * 3mm; // 6cm
+	color: @color;
+	color2: @color2;
+	background-color:#112244+#111;
+}
+
+// calc() 表达式
+
+@var: 50vh / 2;
+.box{
+	width: calc(50% + (@var - 20px));
+}
+
+// 转义
+// 原样字符串替换
+@min768: ~"(min-width: 768px)";
+.element {
+	@media @min768 {
+		font-size: 12px;	
+	}
+}
+
+// 下面就多加了引号，error
+@min1: "(min-width: 1px)";
+
+.element {
+	@media @min1 {
+		font-size: 12px;
+	}
+}
+
+// 3.5+ 可以直接写，不需要转义了
+// ok
+@min2: (min-width: 2px);
+
+.element {
+	@media @min2 {
+		font-size: 12px;
+	}
+}
+
+// 函数
+// 内置了转换颜色、操作字符串、数学运算等函数
+@base-color: #ff5500;
+@base-width: 0.5;
+
+.class {
+	width: percentage(@base-width);
+	// 增加饱和度
+	color: saturate(@base-color, 15%);
+	// 亮25，旋转8度
+	background: spin(lighten(@base-color, 25%), 8%);
+}
+
+// 命名空间和访问器
+// - 对 mixin 进行分组
+// - 不要和 namespace 混淆
+// 加 () 后就不会生成如 #bundle .button 的 css
+#bundle() {
+	.button {
+		display: block;
+		&:hover {
+			background: #000;
+		}
+	}
+	.tab{}
+	.citation{}
+}
+
+#header a {
+	color: pink;
+	#bundle.button();
+}
+
+// Map 映射
+#colors() {
+	primary: blue;
+	secondary: green;
+}
+.button{
+	color: #colors()[primary];
+	border: 1px solid #colors[secondary];
+}
+
+// Scope 作用域, 就近原则
+// mixin 和变量会提升, 可以放后面
+@var1: red;
+.page {
+	@var1: blue;
+	
+	.header {
+		color: @var1;
+		background-color: @var2;
+	}
+	@var2: yellow;
+}
+
+// 注释
+/** this is a comment **/
+// this is a line comment
+
+// import
+// 不会提升到前面, 按顺序写入的
+@import 'other'; // other.less
+@import 'other.css'; // 会放到首行去, 就是 css 的 @import
